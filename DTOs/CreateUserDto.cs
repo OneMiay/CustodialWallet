@@ -5,7 +5,7 @@ namespace CustodialWallet.DTOs
     public class CreateUserDto
     {
         [Required]
-        [EmailAddress]
+        [EmailAddress(ErrorMessage = "Email is not valid")]
         public string Email { get; set; } = null!;
     }
 }

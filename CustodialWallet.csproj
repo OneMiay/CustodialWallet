@@ -16,4 +16,11 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
 
+  <!-- Exclude test project sources from this web project's compilation -->
+  <ItemGroup>
+    <Compile Remove="CustodialWallet.Tests/**" />
+    <None Remove="CustodialWallet.Tests/**" />
+    <EmbeddedResource Remove="CustodialWallet.Tests/**" />
+  </ItemGroup>
+
 </Project>

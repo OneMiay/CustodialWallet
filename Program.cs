@@ -4,6 +4,8 @@ using CustodialWallet.Repositories;
 using CustodialWallet.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Localization;
+using System.Globalization;
 using System.Reflection;
 
 namespace CustodialWallet
@@ -53,6 +55,16 @@ namespace CustodialWallet
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 db.Database.EnsureCreated();
             }
+
+            // Localization: enforce en-US culture for numeric parsing (e.g., reject 0,33)
+            var defaultCulture = new CultureInfo("en-US");
+            var localizationOptions = new RequestLocalizationOptions
+            {
+                DefaultRequestCulture = new RequestCulture(defaultCulture),
+                SupportedCultures = new List<CultureInfo> { defaultCulture },
+                SupportedUICultures = new List<CultureInfo> { defaultCulture }
+            };
+            app.UseRequestLocalization(localizationOptions);
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())

@@ -4,6 +4,7 @@ namespace CustodialWallet.DTOs
 {
     public class WithdrawDto
     {
+        [RegularExpression(@"^\d+(\.\d+)?$", ErrorMessage = "Amount must be a number with '.' as decimal separator")]
         [Range(0.00000001, double.MaxValue, ErrorMessage = "Amount must be greater than zero")]
         public decimal Amount { get; set; }
     }
