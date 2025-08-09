@@ -16,6 +16,8 @@ namespace CustodialWallet
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.WebHost.UseUrls("http://0.0.0.0:8080"); //, "https://0.0.0.0:8081");
+
             // Add services to the container.
 
             builder.Services.AddControllers();
@@ -67,13 +69,22 @@ namespace CustodialWallet
             app.UseRequestLocalization(localizationOptions);
 
             // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
+            //if (app.Environment.IsDevelopment())
+            //{
+            //    app.UseSwagger();
+            //    app.UseSwaggerUI();
+            //}
 
-            app.UseHttpsRedirection();
+            app.MapGet("/", context =>
+            {
+                context.Response.Redirect("/swagger/index.html");
+                return Task.CompletedTask;
+            });
+
+            app.UseSwagger();
+            app.UseSwaggerUI();
+
+            //app.UseHttpsRedirection();
 
             app.UseAuthorization();
 

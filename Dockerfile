@@ -5,7 +5,14 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
-EXPOSE 8081
+#EXPOSE 8081
+
+# Copy the certificate inside the container
+#COPY certs/cert.pfx /https/cert.pfx
+#
+## Install environmental variables for ASP.NET Core https
+#ENV ASPNETCORE_Kestrel__Certificates__Default__Path=/https/cert.pfx
+#ENV ASPNETCORE_Kestrel__Certificates__Default__Password=P@ssword
 
 
 # This stage is used to build the service project
