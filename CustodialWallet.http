@@ -1,0 +1,6 @@
+@CustodialWallet_HostAddress = http://localhost:5014
+
+GET {{CustodialWallet_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
