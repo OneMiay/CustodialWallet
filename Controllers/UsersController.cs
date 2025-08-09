@@ -6,6 +6,9 @@ namespace CustodialWallet.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    /// <summary>
+    /// Users management endpoints.
+    /// </summary>
     public class UsersController : ControllerBase
     {
         private readonly IUserService _service;
@@ -17,7 +20,13 @@ namespace CustodialWallet.Controllers
             _logger = logger;
         }
 
-
+        /// <summary>
+        /// Creates a new user with the specified email. / Создает нового пользователя с указанным email.
+        /// </summary>
+        /// <param name="dto">User creation payload. / Запрос на создание пользователя.</param>
+        /// <response code="201">User successfully created. / Пользователь успешно создан.</response>
+        /// <response code="400">Validation error. / Ошибка валидации.</response>
+        /// <response code="409">Email already exists. / Email уже существует.</response>
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateUserDto dto)
         {
@@ -36,7 +45,12 @@ namespace CustodialWallet.Controllers
             return CreatedAtAction(nameof(GetBalance), new { userId = created!.UserId }, created);
         }
 
-
+        /// <summary>
+        /// Gets the current balance for a user. / Получает текущий баланс для пользователя.
+        /// </summary>
+        /// <param name="userId">User identifier. / Идентификатор пользователя.</param>
+        /// <response code="200">Returns the current balance. / Возвращает текущий баланс.</response>
+        /// <response code="404">User not found. / Пользователь не найден.</response>
         [HttpGet("{userId:guid}/balance")]
         public async Task<IActionResult> GetBalance([FromRoute] Guid userId)
         {
@@ -45,7 +59,14 @@ namespace CustodialWallet.Controllers
             return Ok(balance);
         }
 
-
+        /// <summary>
+        /// Deposits an amount to the user's balance. / Депозит средств на баланс пользователя.
+        /// </summary>
+        /// <param name="userId">User identifier. / Идентификатор пользователя.</param>
+        /// <param name="dto">Deposit payload. / Запрос на депозит средств.</param>
+        /// <response code="200">Deposit successful, returns new balance. / Депозит успешно выполнен, возвращает новый баланс.</response>
+        /// <response code="400">Validation error. / Ошибка валидации.</response>
+        /// <response code="404">User not found. / Пользователь не найден.</response>
         [HttpPost("{userId:guid}/deposit")]
         public async Task<IActionResult> Deposit([FromRoute] Guid userId, [FromBody] DepositDto dto)
         {
@@ -56,7 +77,14 @@ namespace CustodialWallet.Controllers
             return Ok(new { userId = res.UserId, newBalance = res.Balance });
         }
 
-
+        /// <summary>
+        /// Withdraws an amount from the user's balance. / Снятие средств с баланса пользователя.
+        /// </summary>
+        /// <param name="userId">User identifier. / Идентификатор пользователя.</param>
+        /// <param name="dto">Withdraw payload. / Запрос на снятие средств.</param>
+        /// <response code="200">Withdrawal successful, returns new balance. / Снятие успешно выполнено, возвращает новый баланс.</response>
+        /// <response code="400">Validation error or insufficient funds. / Ошибка валидации или недостаточно средств.</response>
+        /// <response code="404">User not found. / Пользователь не найден.</response>
         [HttpPost("{userId:guid}/withdraw")]
         public async Task<IActionResult> Withdraw([FromRoute] Guid userId, [FromBody] WithdrawDto dto)
         {
