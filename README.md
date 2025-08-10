@@ -1,31 +1,37 @@
-﻿# CustodialWallet
-**
-
-## Инструкция для запуска проекта 
+﻿
+# CustodialWallet (SCUF)
 
 **
 
-**Копируем репозиторий** 
+  
+
+## Инструкция для запуска проекта (PostgreSQL+Dapper)
+**
+
+  
+
+**Копируем репозиторий (*если он уже скачен пропускаем*)**
 
     git clone https://github.com/OneMiay/CustodialWallet.git
 
-**Переходим в папку с проектом**
+**Переходим в папку с проектом (*если он уже скачен пропускаем*)**
 
     cd CustodialWallet
 
-**Собираем образ для докера**
+**Переходим в ветку 4fun**
 
-    docker build -t custodialwallet .
+    git switch 4fun
 
-**Запускаем контейнер**
 
-    docker run -d -p 8888:8888 --name custodial-wallet custodialwallet
+**Собираем проект в докере (*PostgreSQL+Dapper*)**
+
+    docker-compose up --build -d
 
 **Открываем проект в браузере**
-[http://localhost:8888/](http://localhost:8888/)
 
+    http://localhost:8888
 
-> ЗЫ: Task level - "Первый класс вторая четверть" :)
 
 Email: i.milashin@gmail.com
+
 Telegram: https://t.me/OMiay
