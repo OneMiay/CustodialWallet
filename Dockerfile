@@ -34,4 +34,13 @@ RUN dotnet publish "./CustodialWallet.csproj" -c $BUILD_CONFIGURATION -o /app/pu
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+# Install PostgreSQL client utilities and curl (optional, useful for debugging/healthchecks)
+USER root
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends postgresql-client curl \
+    && rm -rf /var/lib/apt/lists/*
+USER $APP_UID
+
+# Basic healthcheck to ensure the app has started
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 CMD curl -fsS http://localhost:8080/health || exit 1
 ENTRYPOINT ["dotnet", "CustodialWallet.dll"]

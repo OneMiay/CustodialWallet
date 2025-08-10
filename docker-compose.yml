@@ -1,0 +1,39 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: custodialwallet-db
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-custodial}
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    container_name: custodialwallet-api
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__Postgres=Host=db;Port=5432;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres};Database=${POSTGRES_DB:-custodial}
+    ports:
+      - "8080:8080"
+
+volumes:
+  db_data:

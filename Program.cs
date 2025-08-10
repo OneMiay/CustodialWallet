@@ -1,22 +1,20 @@
 ﻿
-using CustodialWallet.Data;
 using CustodialWallet.Repositories;
 using CustodialWallet.Services;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using Microsoft.AspNetCore.Localization;
-using System.Globalization;
 using System.Reflection;
+using Npgsql;
+using System.Data;
 
 namespace CustodialWallet
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            builder.WebHost.UseUrls("http://0.0.0.0:8080"); //, "https://0.0.0.0:8081");
+            //builder.WebHost.UseUrls("http://0.0.0.0:8080");
 
             // Add services to the container.
 
@@ -37,9 +35,11 @@ namespace CustodialWallet
                 c.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
             });
 
-            // DB
-            var connectionString = builder.Configuration.GetValue<string>("ConnectionStrings:Sqlite") ?? "Data Source=custodial.db";
-            builder.Services.AddDbContext<AppDbContext>(opt => opt.UseSqlite(connectionString));
+            // DB: PostgreSQL (Dapper)
+            var connectionString = builder.Configuration.GetConnectionString("Postgres")
+                ?? "Host=localhost;Port=5432;Username=postgres;Password=postgres;Database=custodial";
+            builder.Services.AddSingleton(new NpgsqlDataSourceBuilder(connectionString).Build());
+            builder.Services.AddScoped<IDbConnection>(sp => sp.GetRequiredService<NpgsqlDataSource>().CreateConnection());
 
             // DI
             builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -51,47 +51,52 @@ namespace CustodialWallet
             var startupLogger = loggerFactory.CreateLogger("Startup");
             startupLogger.LogInformation("Starting DemoCustodialWallet in {Environment}", app.Environment.EnvironmentName);
 
-            // Ensure DB
+            // Ensure DB schema with simple retry for first-run initialization
             using (var scope = app.Services.CreateScope())
             {
-                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                db.Database.EnsureCreated();
+                var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+                var dataSource = scope.ServiceProvider.GetRequiredService<NpgsqlDataSource>();
+                var created = false;
+                for (var attempt = 1; attempt <= 10 && !created; attempt++)
+                {
+                    try
+                    {
+                        await using var conn = await dataSource.OpenConnectionAsync();
+                        await using var cmd = conn.CreateCommand();
+                        cmd.CommandText = @"
+                        CREATE TABLE IF NOT EXISTS public.users (
+                            id uuid PRIMARY KEY,
+                            email text NOT NULL UNIQUE,
+                            balance numeric(38,18) NOT NULL
+                        );";
+                        await cmd.ExecuteNonQueryAsync();
+                        created = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogWarning(ex, "DB init attempt {Attempt} failed. Retrying...", attempt);
+                        await Task.Delay(TimeSpan.FromSeconds(Math.Min(5, attempt)));
+                    }
+                }
             }
 
-            // Localization: enforce en-US culture for numeric parsing (e.g., reject 0,33)
-            var defaultCulture = new CultureInfo("en-US");
-            var localizationOptions = new RequestLocalizationOptions
-            {
-                DefaultRequestCulture = new RequestCulture(defaultCulture),
-                SupportedCultures = new List<CultureInfo> { defaultCulture },
-                SupportedUICultures = new List<CultureInfo> { defaultCulture }
-            };
-            app.UseRequestLocalization(localizationOptions);
-
             // Configure the HTTP request pipeline.
-            //if (app.Environment.IsDevelopment())
-            //{
-            //    app.UseSwagger();
-            //    app.UseSwaggerUI();
-            //}
-
-            app.MapGet("/", context =>
+            if (app.Environment.IsDevelopment())
             {
-                context.Response.Redirect("/swagger/index.html");
-                return Task.CompletedTask;
-            });
+                app.UseSwagger();
+                app.UseSwaggerUI();
+            }
 
-            app.UseSwagger();
-            app.UseSwaggerUI();
-
-            //app.UseHttpsRedirection();
+            app.UseHttpsRedirection();
 
             app.UseAuthorization();
 
 
             app.MapControllers();
 
-            app.Run();
+            app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
+
+            await app.RunAsync();
         }
     }
 }
