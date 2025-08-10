@@ -1,26 +1,48 @@
-using CustodialWallet.Data;
 using CustodialWallet.Models;
 using CustodialWallet.Repositories;
+using Dapper;
 using FluentAssertions;
-using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace CustodialWallet.Tests;
 
 public class UserRepositoryTests
 {
-    private static AppDbContext CreateInMemoryDb(string name)
+    private NpgsqlDataSource? _dataSource;
+
+    private bool TryInitDataSource(out NpgsqlDataSource dataSource)
     {
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: name)
-            .Options;
-        return new AppDbContext(options);
+        var cs = Environment.GetEnvironmentVariable("TEST_POSTGRES");
+        if (string.IsNullOrWhiteSpace(cs))
+        {
+            dataSource = null!;
+            return false;
+        }
+        dataSource = new NpgsqlDataSourceBuilder(cs).Build();
+        _dataSource = dataSource;
+        using var conn = dataSource.OpenConnection();
+        conn.Execute(@"CREATE TABLE IF NOT EXISTS users (
+            id uuid PRIMARY KEY,
+            email text NOT NULL UNIQUE,
+            balance numeric(38,18) NOT NULL
+        );");
+        return true;
+    }
+
+    private UserRepository CreateRepository()
+    {
+        if (_dataSource is null)
+        {
+            throw new InvalidOperationException("DataSource is not initialized. Set TEST_POSTGRES env var to a valid PostgreSQL connection string.");
+        }
+        return new UserRepository(_dataSource.CreateConnection());
     }
 
     [Fact]
     public async Task Create_And_Get_Should_Work()
     {
-        using var db = CreateInMemoryDb(Guid.NewGuid().ToString());
-        var repo = new UserRepository(db);
+        if (!TryInitDataSource(out _)) return; // Skip if no Postgres available
+        var repo = CreateRepository();
 
         var user = new User { Id = Guid.NewGuid(), Email = "a@b.com", Balance = 0m };
         await repo.CreateAsync(user);
@@ -37,8 +59,8 @@ public class UserRepositoryTests
     [Fact]
     public async Task Update_Should_Persist_Changes()
     {
-        using var db = CreateInMemoryDb(Guid.NewGuid().ToString());
-        var repo = new UserRepository(db);
+        if (!TryInitDataSource(out _)) return; // Skip if no Postgres available
+        var repo = CreateRepository();
 
         var user = new User { Id = Guid.NewGuid(), Email = "a@b.com", Balance = 1m };
         await repo.CreateAsync(user);
@@ -49,6 +71,7 @@ public class UserRepositoryTests
         (await repo.GetByIdAsync(user.Id))!.Balance.Should().Be(5m);
     }
 }
+
 
 
 
