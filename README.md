@@ -45,7 +45,7 @@ docker  run  -d  -p  8080:8080  --name  custodial-wallet  custodialwallet
 
 ```
 
-http://localhost:8080/
+http://localhost:8080/swagger/index.html
 
 ```
 
@@ -97,7 +97,7 @@ docker-compose  up  --build  -d
 
 ```
 
-http://localhost:8888
+http://localhost:8888/swagger/index.html
 
 ```
 
