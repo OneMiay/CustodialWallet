@@ -1,7 +1,7 @@
 ﻿# CustodialWallet
 **
 
-## Инструкция для запуска проекта
+## Инструкция для запуска проекта 
 
 **
 
@@ -19,10 +19,10 @@
 
 **Запускаем контейнер**
 
-    docker run -d -p 8080:8080 --name custodial-wallet custodialwallet
+    docker run -d -p 8888:8888 --name custodial-wallet custodialwallet
 
 **Открываем проект в браузере**
-[http://localhost:8080/](http://localhost:8080/)
+[http://localhost:8888/](http://localhost:8888/)
 
 
 > ЗЫ: Task level - "Первый класс вторая четверть" :)

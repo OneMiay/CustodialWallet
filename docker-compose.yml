@@ -23,17 +23,17 @@ services:
 
   api:
     build: .
-    container_name: custodialwallet-api
+    container_name: custodialwallet-scuf
     depends_on:
       db:
         condition: service_healthy
     env_file:
       - .env
     environment:
-      - ASPNETCORE_URLS=http://+:8080
+      - ASPNETCORE_URLS=http://+:8888
       - ConnectionStrings__Postgres=Host=db;Port=5432;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres};Database=${POSTGRES_DB:-custodial}
     ports:
-      - "8080:8080"
+      - "8888:8888"
 
 volumes:
   db_data:

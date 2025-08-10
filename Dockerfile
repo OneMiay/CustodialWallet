@@ -4,7 +4,7 @@
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 USER $APP_UID
 WORKDIR /app
-EXPOSE 8080
+EXPOSE 8888
 #EXPOSE 8081
 
 # Copy the certificate inside the container
@@ -42,5 +42,5 @@ RUN apt-get update \
 USER $APP_UID
 
 # Basic healthcheck to ensure the app has started
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 CMD curl -fsS http://localhost:8080/health || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 CMD curl -fsS http://localhost:8888/health || exit 1
 ENTRYPOINT ["dotnet", "CustodialWallet.dll"]
